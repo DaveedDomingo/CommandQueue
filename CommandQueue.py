@@ -15,6 +15,9 @@ temp_queue_file_path = "./~queue.txt"
 program_name = sys.argv[0].split('.')[0]
 
 max_processes = cpu_count - 2
+if max_processes <= 0:
+    max_processes = 2
+
 lock_poll_interval_s = 5
 monitor_refresh_s = 5
 
@@ -131,34 +134,42 @@ def monitor_loop():
         time.sleep(monitor_refresh_s)
 
 
-debug("Configuration:")
-debug("  Platform: " + platform_type)
-debug("  CPU Count: " + str(cpu_count))
-debug("  Max Processes: " + str(max_processes))
-debug("  Lock Poll Interval: " + str(lock_poll_interval_s) + " seconds")
-debug("  Monitor Refresh Interval: " + str(monitor_refresh_s) + " seconds")
-
 
 if (len(sys.argv) > 1 and sys.argv[1] == "run"):
+
+    # print config
+    debug("Configuration:")
+    debug("  Platform: " + platform_type)
+    debug("  CPU Count: " + str(cpu_count))
+    debug("  Max Processes: " + str(max_processes))
+    debug("  Lock Poll Interval: " + str(lock_poll_interval_s) + " seconds")
+    debug("  Monitor Refresh Interval: " + str(monitor_refresh_s) + " seconds")
+
+    # check for queue file
     if os.path.exists(queue_file_path):
         debug("Queue file found. Using queue file " + os.path.abspath(queue_file_path) + ".")
     else:
         debug("Queue file doesn't exist, creating one. (" + os.path.abspath(queue_file_path) + ")")
         open(queue_file_path, "x").close()
+
+    # check if queue already locked
     if check_file_lock():
-        debug(" " + program_name + " started.")
+        debug(program_name + " started.")
         monitor_loop()
     else:
         exit("ERROR: Queue already locked, can't start.", 1)
+
 else:
+    if not os.path.exists(queue_file_path):
+        exit("No queue file to exit. Have you started the program (e.g. run)?", 1)
     file_lock()
     print("Opening queue for editing")
-    if platform_type == "Darwin" or \
-        platform_type == "Linux":
-        #os.system("open -W -n -t " + queue_file_path)
+    if platform_type == "Linux":
         os.system("vim " + queue_file_path)
+    elif platform_type == "Darwin":
+        os.system("open -W -n -t " + queue_file_path)
     elif platform_type == "Windows":
-        os.system(queue_file_path) #?
+        os.system("start /B /WAIT " + queue_file_path)
     else:
         print("Error: unrecognized platform (" + platform_type + ")")
     file_unlock()
