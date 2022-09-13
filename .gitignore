@@ -1,0 +1,4 @@
+*.DS_Store
+./~queue.txt
+./queue.txt
+./queue.lock
