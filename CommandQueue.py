@@ -137,6 +137,10 @@ def monitor_loop():
 
 if (len(sys.argv) > 1 and sys.argv[1] == "run"):
 
+    # check if set cores
+    if len(sys.argv) == 3:
+        max_processes = int(sys.argv[2])
+
     # print config
     debug("Configuration:")
     debug("  Platform: " + platform_type)
